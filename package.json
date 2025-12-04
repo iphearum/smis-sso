@@ -1,0 +1,14 @@
+{
+  "name": "smis-sso",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Workspace for the SMIS SSO client library and platform gateway definitions",
+  "workspaces": [
+    "packages/*",
+    "platform/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  }
+}
