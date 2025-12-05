@@ -5,7 +5,7 @@
   "description": "Workspace for the SMIS SSO client library and platform gateway definitions",
   "workspaces": [
     "packages/*",
-    "platform/*"
+    "auth-gateway/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces",
