@@ -50,7 +50,8 @@ export class SessionsController {
         expiresAt: ${JSON.stringify(expiresAt)}
       };
       const message = { type: 'smis:sso:session', payload };
-      window.opener?.postMessage(message, window.location.origin);
+      // Use wildcard target to allow cross-origin opener; client should validate origin on receipt.
+      window.opener?.postMessage(message, '*');
       window.close();
     </script>
   </body>
@@ -107,7 +108,7 @@ export class SessionsController {
           }
           const session = await response.json();
           const message = { type: 'smis:sso:session', payload: session };
-          window.opener?.postMessage(message, window.location.origin);
+          window.opener?.postMessage(message, '*');
           window.close();
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unable to sign in';

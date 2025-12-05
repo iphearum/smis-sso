@@ -13,7 +13,7 @@ export class SmisSsoClient {
     this.storage = getDefaultStorage();
     this.storageKey = config.storageKey ?? `smis-sso:${config.appKey}`;
     this.timeoutMs = config.timeoutMs ?? 15000;
-    this.pollIntervalMs = config.pollIntervalMs ?? 250;
+    this.pollIntervalMs = config.pollIntervalMs ?? 60*1000;
     this.authOrigin = new URL(config.authBaseUrl).origin;
   }
 

@@ -7,7 +7,8 @@ import { AppModule } from './app.module';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
 
-  await app.register(cookie, {
+  // Casting avoids Fastify/Nest type mismatch for cookie plugin decorations
+  await app.register(cookie as any, {
     secret: process.env.COOKIE_SECRET ?? 'smis-cookie-secret',
     parseOptions: {
       sameSite: 'lax',

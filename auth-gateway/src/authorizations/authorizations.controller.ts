@@ -3,10 +3,14 @@ import { FastifyRequest } from 'fastify';
 import { ApplicationsService } from '../applications/applications.service';
 import { AccessTokenPayload } from '../auth/auth.types';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { UsersService } from '../users/users.service';
 
 @Controller('/api/sso')
 export class AuthorizationsController {
-  constructor(private readonly applicationsService: ApplicationsService) {}
+  constructor(
+    private readonly applicationsService: ApplicationsService,
+    private readonly usersService: UsersService
+  ) {}
 
   @Get('/authorizations')
   @UseGuards(JwtAuthGuard)
@@ -23,5 +27,20 @@ export class AuthorizationsController {
     }
 
     return { roles: payload.roles, permissions: payload.permissions };
+  }
+
+  @Get('/authorizations/context')
+  @UseGuards(JwtAuthGuard)
+  async getContext(@Req() request: FastifyRequest) {
+    const payload = (request as FastifyRequest & { user?: AccessTokenPayload }).user;
+    if (!payload) {
+      throw new BadRequestException('Missing access token context');
+    }
+    const user = await this.usersService.getById(payload.sub);
+    if (!user.employeeId) {
+      return { employeeId: null, branches: [] };
+    }
+    const branches = await this.usersService.getBranchDepartmentAuthorizations(user.employeeId);
+    return { employeeId: user.employeeId, branches };
   }
 }

@@ -10,10 +10,10 @@ export class UsersController {
 
   @Get('/me')
   @UseGuards(JwtAuthGuard)
-  getProfile(@Req() request: FastifyRequest) {
+  async getProfile(@Req() request: FastifyRequest) {
     const payload = (request as FastifyRequest & { user?: AccessTokenPayload }).user;
     if (!payload) return null;
-    const user = this.usersService.getById(payload.sub);
+    const user = await this.usersService.getById(payload.sub);
     return {
       id: user.id,
       username: user.username,
@@ -22,5 +22,18 @@ export class UsersController {
       email: user.email,
       phone: user.phone
     };
+  }
+
+  @Get('/me/assignments')
+  @UseGuards(JwtAuthGuard)
+  async getAssignments(@Req() request: FastifyRequest) {
+    const payload = (request as FastifyRequest & { user?: AccessTokenPayload }).user;
+    if (!payload) return null;
+    const user = await this.usersService.getById(payload.sub);
+    if (!user.employeeId) {
+      return { employeeId: null, tree: [] };
+    }
+    const tree = await this.usersService.getEmployeeAssignmentTree(user.employeeId);
+    return { employeeId: user.employeeId, tree };
   }
 }

@@ -17,7 +17,7 @@ export class AuthService {
 
   async login(username: string, password: string, appKey: string): Promise<SessionTokens> {
     const app = this.applicationsService.requireApplication(appKey);
-    const user = this.usersService.validateCredentials(username, password);
+    const user = await this.usersService.validateCredentials(username, password);
     return this.issueSession(user, app.key);
   }
 
@@ -28,7 +28,7 @@ export class AuthService {
     }
 
     const app = this.applicationsService.requireApplication(appKey);
-    const user = this.usersService.getById(record.userId);
+    const user = await this.usersService.getById(record.userId);
     return this.issueSession(user, app.key, refreshToken);
   }
 
@@ -40,7 +40,7 @@ export class AuthService {
 
     const resolvedAppKey = appKey ?? record.appKey;
     const app = this.applicationsService.requireApplication(resolvedAppKey);
-    const user = this.usersService.getById(record.userId);
+    const user = await this.usersService.getById(record.userId);
     return this.issueSession(user, app.key, refreshToken);
   }
 
@@ -56,17 +56,18 @@ export class AuthService {
 
   private async issueSession(user: UserProfile, appKey: string, refreshToken?: string): Promise<SessionTokens> {
     const app = this.applicationsService.requireApplication(appKey);
-    const { roles, permissions } = this.usersService.resolveAuthorizations(user, app);
+    const { roles, permissions } = await this.usersService.resolveAuthorizations(user, app);
+    const userId = String(user.id);
     const accessToken = await this.createAccessToken({
-      sub: user.id,
+      sub: userId,
       username: user.username,
       appKey: app.key,
       roles,
       permissions
     });
 
-    const refresh = refreshToken ?? this.refreshTokenStore.generate(user.id, app.key);
-    this.refreshTokenStore.touch(refresh, user.id, app.key);
+    const refresh = refreshToken ?? this.refreshTokenStore.generate(userId, app.key);
+    this.refreshTokenStore.touch(refresh, userId, app.key);
 
     return {
       accessToken: accessToken.token,
