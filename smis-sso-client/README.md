@@ -13,9 +13,9 @@ npm install @smis/sso-client
 Each SMIS-issued application key identifies the target application and its authorization scope (examples: `pp-#########`, `pp-gic-#########`, `tk-####`, `tk-gic-#########`). Provide that key alongside the SMIS auth domain when creating the client:
 
 ```ts
-import { SmisSsoClient } from '@smis/sso-client';
+import { Client } from '@smis/sso-client';
 
-const client = new SmisSsoClient({
+const client = new Client({
   appKey: 'pp-123456789',
   authBaseUrl: 'https://auth.smis.itc.edu.kh',
   probePath: '/sso/probe' // optional, defaults to /sso/probe
@@ -33,8 +33,8 @@ const context = await client.loadContextAuthorizations(session); // branch/depar
 
 // Common actions
 await client.signIn({ force: true }); // force fresh login even if cached
-await client.switchUser();             // shortcut: clear and force new login
-await client.signOut();                // logout (best-effort) and clear local cache
+await client.switchUser();            // shortcut: clear and force new login
+await client.signOut();               // logout (best-effort) and clear local cache
 ```
 
 ### Handling the probe in the auth portal
@@ -59,7 +59,7 @@ authApi.getSession().then((session) => {
 Provide your own `StorageAdapter` to control how the session is persisted (for example, to encrypt content or to store it in-memory during SSR):
 
 ```ts
-const client = new SmisSsoClient({
+const client = new Client({
   appKey: 'pp-123456789',
   authBaseUrl: 'https://auth.smis.itc.edu.kh',
   storageKey: 'my-app-session'

@@ -9,7 +9,7 @@
   "author": "Your Team Name",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourorg/sso-client.git"
+    "url": "https://github.com/iphearum/sso-client.git"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

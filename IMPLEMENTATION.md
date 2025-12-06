@@ -9,9 +9,9 @@ npm install @smis/sso-client
 ### Create a client
 
 ```ts
-import { SmisSsoClient } from '@smis/sso-client';
+import { Client } from '@smis/sso-client';
 
-const client = new SmisSsoClient({
+const client = new Client({
   appKey: 'pp-demo-123456',
   authBaseUrl: 'http://localhost:3000', // auth‑gateway base URL
   probePath: '/sso/probe',              // optional, defaults to /sso/probe
@@ -27,6 +27,7 @@ const client = new SmisSsoClient({
 |------|-------------|
 | `await client.ensureSession()` | Reuses a cached session if valid; otherwise opens the auth popup/probe. |
 | `await client.loadAuthorizations(session?)` | Retrieves roles/permissions; `session` optional (will call `ensureSession` if omitted). |
+| `await client.loadContextAuthorizations(session?)` | Retrieves contextual branch/department authz from `/api/sso/authorizations/context`. |
 | `client.getCachedSession()` | Returns the cached session if still valid, otherwise `null`. |
 | `client.clearSession()` | Removes the cached session without contacting the server. |
 
@@ -47,6 +48,9 @@ const session = await client.ensureSession();
 // Fetch roles/permissions
 const authz = await client.loadAuthorizations(session);
 
+// Fetch contextual authorizations
+const context = await client.loadContextAuthorizations(session);
+
 // Get cached session (if still valid)
 const cached = client.getCachedSession();
 
@@ -62,4 +66,3 @@ await client.signOut();
 // Switch accounts explicitly
 await client.switchUser();
 ```
-

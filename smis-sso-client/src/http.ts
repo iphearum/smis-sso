@@ -1,14 +1,14 @@
-import { SmisAuthorization, SmisSession, SmisSsoConfig } from './types';
+import { Authorization, ContextAuthorization, Session, Config } from './types';
 
-export const buildAuthUrl = (config: SmisSsoConfig): URL => {
+export const buildAuthUrl = (config: Config): URL => {
   const probePath = config.probePath ?? '/sso/probe';
   return new URL(probePath, config.authBaseUrl);
 };
 
 export const fetchAuthorizations = async (
-  config: SmisSsoConfig,
-  session: SmisSession
-): Promise<SmisAuthorization> => {
+  config: Config,
+  session: Session
+): Promise<Authorization> => {
   const authUrl = new URL('/api/sso/authorizations', config.authBaseUrl);
   const fetchImpl = config.fetch ?? fetch;
   const response = await fetchImpl(authUrl.toString(), {
@@ -22,13 +22,13 @@ export const fetchAuthorizations = async (
     throw new Error(`Failed to load authorizations (${response.status})`);
   }
 
-  return (await response.json()) as SmisAuthorization;
+  return (await response.json()) as Authorization;
 };
 
 export const fetchContextAuthorizations = async (
-  config: SmisSsoConfig,
-  session: SmisSession
-): Promise<unknown> => {
+  config: Config,
+  session: Session
+): Promise<ContextAuthorization> => {
   const url = new URL('/api/sso/authorizations/context', config.authBaseUrl);
   const fetchImpl = config.fetch ?? fetch;
   const response = await fetchImpl(url.toString(), {
@@ -41,10 +41,10 @@ export const fetchContextAuthorizations = async (
     throw new Error(`Failed to load contextual authorizations (${response.status})`);
   }
 
-  return response.json();
+  return (await response.json()) as ContextAuthorization;
 };
 
-export const logoutSession = async (config: SmisSsoConfig, session?: SmisSession): Promise<void> => {
+export const logoutSession = async (config: Config, session?: Session): Promise<void> => {
   if (!session?.refreshToken) return;
   const url = new URL('/auth/logout', config.authBaseUrl);
   const fetchImpl = config.fetch ?? fetch;

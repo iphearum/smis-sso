@@ -1,14 +1,14 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { SmisSsoClient, type SmisSession } from '@smis/sso-client';
+import { Client, type Session } from '@smis/sso-client';
 
 const defaultBase = process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'http://localhost:3000';
 const defaultAppKey = process.env.NEXT_PUBLIC_APP_KEY || 'pp-demo-123456';
 const STORAGE_KEY = 'smis-demo:sessions';
 
 type StoredSession = {
-  session: SmisSession;
+  session: Session;
   username?: string;
   appKey?: string;
 };
@@ -27,7 +27,7 @@ const decodeJwt = (token: string): any | null => {
 export default function Home() {
   const [authBaseUrl, setAuthBaseUrl] = useState(defaultBase);
   const [appKey, setAppKey] = useState(defaultAppKey);
-  const [session, setSession] = useState<SmisSession | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [savedSessions, setSavedSessions] = useState<StoredSession[]>(() => {
     if (typeof window === 'undefined') return [];
     try {
@@ -42,7 +42,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const client = useMemo(() => new SmisSsoClient({ appKey, authBaseUrl }), [appKey, authBaseUrl]);
+  const client = useMemo(() => new Client({ appKey, authBaseUrl }), [appKey, authBaseUrl]);
 
   const ensureSession = useCallback(async () => {
     setError(null);
@@ -206,7 +206,7 @@ export default function Home() {
                       <div className="muted" style={{ fontSize: 12 }}>Expires: {exp}</div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                         <button onClick={() => selectSavedSession(s)} disabled={loading}>Use</button>
-                        <button onClick={() => removeSavedSession(s.session.refreshToken)} style={{ background: '#f85149', color: '#fff' }} disabled={loading}>
+                        <button onClick={() => removeSavedSession(s.session.refreshToken || '')} style={{ background: '#f85149', color: '#fff' }} disabled={loading}>
                           Remove
                         </button>
                       </div>

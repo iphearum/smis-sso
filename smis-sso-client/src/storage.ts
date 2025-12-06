@@ -1,4 +1,4 @@
-import { SmisSession, StorageAdapter } from './types';
+import { Session, StorageAdapter } from './types';
 
 export class MemoryStorage implements StorageAdapter {
   private store = new Map<string, string>();
@@ -27,7 +27,7 @@ export const getDefaultStorage = (): StorageAdapter => {
 export const storeSession = (
   storage: StorageAdapter,
   storageKey: string,
-  session: SmisSession | null
+  session: Session | null
 ): void => {
   if (!session) {
     storage.removeItem(storageKey);
@@ -40,12 +40,12 @@ export const storeSession = (
 export const readSession = (
   storage: StorageAdapter,
   storageKey: string
-): SmisSession | null => {
+): Session | null => {
   const value = storage.getItem(storageKey);
   if (!value) return null;
 
   try {
-    return JSON.parse(value) as SmisSession;
+    return JSON.parse(value) as Session;
   } catch (error) {
     storage.removeItem(storageKey);
     return null;
