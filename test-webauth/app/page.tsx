@@ -114,12 +114,40 @@ export default function Home() {
       setSession(null);
       setAuthz(null);
       setContextAuthz(null);
+      setSavedSessions([]);
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
     } catch (e: any) {
       setError(e?.message || 'Failed to logout');
     } finally {
       setLoading(false);
     }
   }, [authBaseUrl, session]);
+
+  const clearAllAccounts = () => {
+    // Clear React state
+    setSavedSessions([]);
+    setSession(null);
+    setAuthz(null);
+    setContextAuthz(null);
+
+    // Remove data from localStorage
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(`smis-sso:${defaultAppKey}`);
+
+      // Remove any cookies whose name starts with "smis-" or "smis_"
+      const cookies = document.cookie?.split('; ') ?? [];
+      cookies.forEach((c) => {
+        const [name] = c.split('=');
+        if (/^smis[-_]/i.test(name)) {
+          // Delete the cookie by setting an expired date; include path to cover most cases
+          document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        }
+      });
+    }
+  };
 
   const selectSavedSession = (saved: StoredSession) => {
     setSession(saved.session);
@@ -160,6 +188,7 @@ export default function Home() {
             <button onClick={fetchAuthorizations} disabled={!session || loading}>Load AuthZ</button>
             <button onClick={fetchContext} disabled={!session || loading}>Load Context</button>
             <button onClick={logout} disabled={!session || loading} style={{ background: '#f85149', color: '#fff' }}>Logout</button>
+            <button onClick={clearAllAccounts} disabled={loading} className="ghost">Clear Accounts</button>
           </div>
           {error && <p style={{ color: '#f85149', marginTop: 14 }}>{error}</p>}
           {savedSessions.length > 0 && (

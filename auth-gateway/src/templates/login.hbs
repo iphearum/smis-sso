@@ -14,7 +14,7 @@
         <p class="lede">Enter your SMIS credentials to continue to the requested application.</p>
       </header>
 
-      <form id="login-form" class="stack">
+      <form id="login-form" class="stack" hidden>
         <label class="field">
           <span>Username</span>
           <input type="text" name="username" autocomplete="username" required />
@@ -26,17 +26,170 @@
         <button type="submit" class="primary">Sign in</button>
         <div id="error" class="error" aria-live="polite"></div>
       </form>
+
+      <section id="accounts" class="accounts" aria-live="polite"></section>
     </main>
 
     <script>
       const form = document.getElementById('login-form');
       const errorBox = document.getElementById('error');
+      const accountsEl = document.getElementById('accounts');
       const appKey = {{#if appKey}}{{{json appKey}}}{{else}}null{{/if}};
-      console.log('Login page loaded with appKey:', appKey);
+      const STORAGE_KEY = 'smis-auth:saved-accounts';
+
+      const readAccounts = () => {
+        try {
+          const raw = window.localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      };
+
+      const writeAccounts = (accounts) => {
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
+      };
+
+      const normalizeUser = (value) => (value || '').toString().trim().toLowerCase();
+
+      let formVisible = false;
+
+      const showForm = () => {
+        form.hidden = false;
+        formVisible = true;
+        const userInput = form.querySelector('input[name="username"]');
+        userInput?.focus();
+      };
+
+      const hideForm = () => {
+        form.hidden = true;
+        formVisible = false;
+      };
+
+      const renderAccounts = () => {
+          const accounts = readAccounts().filter((a) => a.appKey === appKey);
+          if (!accounts.length) {
+            accountsEl.innerHTML = '';
+            showForm();
+            return;
+          }
+
+        hideForm();
+
+        accountsEl.innerHTML = `
+          <div class="accounts-head">
+            <div>
+              <h3>Choose an account</h3>
+              <p class="muted">Continue with one of your saved accounts or add another.</p>
+            </div>
+            <div class="account-head-actions">
+              <button class="ghost" id="clear-accounts" type="button">Clear all</button>
+            </div>
+          </div>
+          <div class="account-grid">
+            ${accounts
+              .map(
+                (a) => `
+                  <article class="account-card" data-refresh="${a.refreshToken}">
+                    <div class="avatar">${(a.username || 'U')[0]?.toUpperCase() ?? 'U'}</div>
+                    <div class="account-meta">
+                      <div class="account-name">${a.username || 'Unknown user'}</div>
+                      <div class="account-detail">${a.displayName || a.appKey}</div>
+                    </div>
+                    <div class="account-actions">
+                      <button class="secondary" data-action="use" type="button">Use</button>
+                      <button class="ghost danger" data-action="remove" type="button">Remove</button>
+                    </div>
+                  </article>
+                `
+              )
+              .join('')}
+            <article class="account-card add-account" data-action="new">
+              <div class="avatar plus">+</div>
+              <div class="account-meta">
+                <div class="account-name">Use another account</div>
+                <div class="account-detail">Sign in with a different SMIS account</div>
+              </div>
+            </article>
+          </div>`;
+
+        const clearBtn = document.getElementById('clear-accounts');
+        if (clearBtn) {
+          clearBtn.onclick = () => {
+            const remaining = readAccounts().filter((a) => a.appKey !== appKey);
+            writeAccounts(remaining);
+            renderAccounts();
+          };
+        }
+
+        accountsEl.querySelectorAll('.account-card').forEach((card) => {
+          const action = card.getAttribute('data-action');
+          const refreshToken = card.getAttribute('data-refresh');
+          card.addEventListener('click', async (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (action === 'new') {
+              showForm();
+              return;
+            }
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const btnAction = target.getAttribute('data-action') || action;
+            if (btnAction === 'remove') {
+              const next = readAccounts().filter((a) => a.refreshToken !== refreshToken);
+              writeAccounts(next);
+              renderAccounts();
+              return;
+            }
+            if (btnAction === 'use') {
+              await useSavedAccount(refreshToken);
+            }
+          });
+        });
+      };
+
+      const useSavedAccount = async (refreshToken) => {
+        if (!refreshToken) return;
+        errorBox.textContent = '';
+        const saved = readAccounts().find((a) => a.refreshToken === refreshToken);
+        try {
+          const response = await fetch('/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ refreshToken, appKey })
+          });
+          if (!response.ok) {
+            throw new Error('Saved session expired, please sign in again');
+          }
+          const session = await response.json();
+          const message = { type: 'smis:sso:session', payload: session };
+          window.opener?.postMessage(message, '*');
+          window.close();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unable to use saved session';
+          errorBox.textContent = message;
+          errorBox.setAttribute('role', 'alert');
+          errorBox.setAttribute('aria-live', 'assertive');
+
+          // Remove stale entry and allow user to sign in again with same username
+          writeAccounts(readAccounts().filter((a) => a.refreshToken !== refreshToken));
+          renderAccounts();
+          showForm();
+          if (saved?.username) {
+            const userInput = form.querySelector('input[name="username"]');
+            if (userInput) userInput.value = saved.username;
+          }
+          const passInput = form.querySelector('input[name="password"]');
+          passInput?.focus();
+        }
+      };
 
       if (!appKey) {
         errorBox.textContent = 'Missing application key in probe URL. Please reopen from the requesting app.';
       }
+
+      renderAccounts();
 
       form.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -67,17 +220,29 @@
             throw new Error(body.message || 'Unable to sign in');
           }
 
-      const session = await response.json();
-      const message = { type: 'smis:sso:session', payload: session };
-      window.opener?.postMessage(message, '*');
-      window.close();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to sign in';
-      errorBox.textContent = message;
-      errorBox.setAttribute('role', 'alert');
-      errorBox.setAttribute('aria-live', 'assertive');
-    }
-  });
+          const session = await response.json();
+          const account = {
+            refreshToken: session.refreshToken,
+            appKey,
+            username: payload.username,
+            displayName: payload.username
+          };
+          const accounts = [account, ...readAccounts().filter((a) => normalizeUser(a.username) !== normalizeUser(account.username) || a.appKey !== appKey)];
+          writeAccounts(accounts);
+
+          // After adding a new account, hide the form and show chooser again.
+          renderAccounts();
+
+          const message = { type: 'smis:sso:session', payload: session };
+          window.opener?.postMessage(message, '*');
+          window.close();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unable to sign in';
+          errorBox.textContent = message;
+          errorBox.setAttribute('role', 'alert');
+          errorBox.setAttribute('aria-live', 'assertive');
+        }
+      });
     </script>
   </body>
 </html>

@@ -26,6 +26,11 @@ export interface SmisAuthorization {
   permissions: string[];
 }
 
+export interface SmisContextAuthorization {
+  employeeId: number | null;
+  branches: any[];
+}
+
 export interface StorageAdapter {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;

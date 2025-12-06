@@ -60,6 +60,12 @@ button {
 }
 button:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(88,166,255,0.25); }
 
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid #30363d;
+}
+
 pre {
   background: #0f141b;
   border: 1px solid #30363d;

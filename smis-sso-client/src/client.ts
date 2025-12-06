@@ -1,4 +1,4 @@
-import { buildAuthUrl, fetchAuthorizations } from './http';
+import { buildAuthUrl, fetchAuthorizations, fetchContextAuthorizations, logoutSession } from './http';
 import { getDefaultStorage, readSession, storeSession } from './storage';
 import { AuthProbeMessage, SmisAuthorization, SmisSession, SmisSsoConfig, StorageAdapter } from './types';
 
@@ -12,7 +12,7 @@ export class SmisSsoClient {
   constructor(private readonly config: SmisSsoConfig) {
     this.storage = getDefaultStorage();
     this.storageKey = config.storageKey ?? `smis-sso:${config.appKey}`;
-    this.timeoutMs = config.timeoutMs ?? 15000;
+    this.timeoutMs = config.timeoutMs ?? 60*60*1000;
     this.pollIntervalMs = config.pollIntervalMs ?? 60*1000;
     this.authOrigin = new URL(config.authBaseUrl).origin;
   }
@@ -47,8 +47,46 @@ export class SmisSsoClient {
     return fetchAuthorizations(this.config, resolvedSession);
   }
 
+  async loadContextAuthorizations(session?: SmisSession): Promise<unknown> {
+    const resolvedSession = session ?? (await this.ensureSession());
+    return fetchContextAuthorizations(this.config, resolvedSession);
+  }
+
+  /**
+   * Clears the locally cached session only (no network calls).
+   */
   clearSession(): void {
     storeSession(this.storage, this.storageKey, null);
+  }
+
+  /**
+   * Signs in, forcing a fresh probe if `force` is true even when a cached session exists.
+   */
+  async signIn(options?: { force?: boolean }): Promise<SmisSession> {
+    const force = options?.force ?? false;
+    if (force) {
+      this.clearSession();
+    }
+    return this.ensureSession();
+  }
+
+  /**
+   * Signs out: calls the auth portal logout (best-effort) and clears all local state.
+   */
+  async signOut(session?: SmisSession): Promise<void> {
+    const current = session ?? this.getCachedSession() ?? undefined;
+    await logoutSession(this.config, current).catch(() => undefined);
+    this.clearSession();
+    // window.localStorage.removeItem(`smis-sso:${this.config.appKey}`);
+    // window.cookieStore.delete(`smis_refresh_token`).catch(() => undefined);
+  }
+
+  /**
+   * Switches user by clearing the current session and forcing a new sign-in.
+   */
+  async switchUser(): Promise<SmisSession> {
+    await this.signOut();
+    return this.signIn({ force: true });
   }
 
   private launchAuthProbe(): Promise<SmisSession> {
@@ -56,7 +94,7 @@ export class SmisSsoClient {
       const authUrl = buildAuthUrl(this.config);
       authUrl.searchParams.set('appKey', this.config.appKey);
 
-      const popup = window.open(authUrl.toString(), '_blank', 'width=480,height=640');
+      const popup = window.open(authUrl.toString(), '_blank', 'width=580,height=640');
       if (!popup) {
         reject(new Error('Unable to open auth probe window'));
         return;

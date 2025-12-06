@@ -29,6 +29,12 @@ The client opens the SMIS auth portal in a short-lived window/tab to discover or
 ```ts
 const session = await client.ensureSession();
 const { roles, permissions } = await client.loadAuthorizations(session);
+const context = await client.loadContextAuthorizations(session); // branch/department contextual authz
+
+// Common actions
+await client.signIn({ force: true }); // force fresh login even if cached
+await client.switchUser();             // shortcut: clear and force new login
+await client.signOut();                // logout (best-effort) and clear local cache
 ```
 
 ### Handling the probe in the auth portal

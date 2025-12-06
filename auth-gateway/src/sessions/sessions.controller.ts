@@ -16,7 +16,6 @@ export class SessionsController {
 
   @Get('/sso/probe')
   async probe(@Query('appKey') appKey: string, @Req() request: FastifyRequest, @Res() reply: ViewReply): Promise<void> {
-    console.log('SSO probe requested for appKey:', appKey, 'from IP:', request.ip);
     if (!appKey) {
       throw new BadRequestException('Missing appKey');
     }

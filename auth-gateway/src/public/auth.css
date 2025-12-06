@@ -112,3 +112,102 @@ button.primary:active {
   color: var(--danger);
   min-height: 20px;
 }
+
+.accounts {
+  margin-top: 24px;
+  border-top: 1px solid var(--border);
+  padding-top: 18px;
+}
+
+.accounts-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.account-head-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.account-grid {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.account-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.account-card.add-account {
+  cursor: pointer;
+  border-style: dashed;
+  background: #f1f5f9;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.avatar.plus {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.account-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-name {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.account-detail {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.account-actions {
+  grid-column: 1 / span 2;
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+button.secondary {
+  background: #e0e7ff;
+  color: #1d4ed8;
+  border: 1px solid #cbd5ff;
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+
+button.ghost.danger {
+  color: var(--danger);
+  border-color: #fecdd3;
+}
