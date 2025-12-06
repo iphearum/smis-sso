@@ -30,6 +30,11 @@ main {
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
+.card .card {
+  background: #0f141b;
+  border-color: #202833;
+}
+
 h1 { font-size: 28px; margin: 0 0 16px; }
 h2 { margin: 24px 0 12px; }
 

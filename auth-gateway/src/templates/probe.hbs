@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SMIS SSO Probe</title>
+  </head>
+  <body>
+    <script>
+      const payload = {{{json payload}}};
+      const message = { type: 'smis:sso:session', payload };
+      // Use wildcard target to allow cross-origin opener; client should validate origin on receipt.
+      window.opener?.postMessage(message, '*');
+      window.close();
+    </script>
+  </body>
+</html>

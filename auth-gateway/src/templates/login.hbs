@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign in to SMIS</title>
+    <link rel="stylesheet" href="/static/auth.css" />
+  </head>
+  <body>
+    <main class="card">
+      <header>
+        <p class="eyebrow">SMIS SSO</p>
+        <h1>Sign in</h1>
+        <p class="lede">Enter your SMIS credentials to continue to the requested application.</p>
+      </header>
+
+      <form id="login-form" class="stack">
+        <label class="field">
+          <span>Username</span>
+          <input type="text" name="username" autocomplete="username" required />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <input type="password" name="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="primary">Sign in</button>
+        <div id="error" class="error" aria-live="polite"></div>
+      </form>
+    </main>
+
+    <script>
+      const form = document.getElementById('login-form');
+      const errorBox = document.getElementById('error');
+      const appKey = {{#if appKey}}{{{json appKey}}}{{else}}null{{/if}};
+      console.log('Login page loaded with appKey:', appKey);
+
+      if (!appKey) {
+        errorBox.textContent = 'Missing application key in probe URL. Please reopen from the requesting app.';
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        errorBox.textContent = '';
+
+        if (!appKey) {
+          errorBox.textContent = 'Missing application key (appKey).';
+          return;
+        }
+
+        const data = new FormData(form);
+        const payload = {
+          username: data.get('username'),
+          password: data.get('password'),
+          appKey
+        };
+
+        try {
+          const response = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.message || 'Unable to sign in');
+          }
+
+      const session = await response.json();
+      const message = { type: 'smis:sso:session', payload: session };
+      window.opener?.postMessage(message, '*');
+      window.close();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign in';
+      errorBox.textContent = message;
+      errorBox.setAttribute('role', 'alert');
+      errorBox.setAttribute('aria-live', 'assertive');
+    }
+  });
+    </script>
+  </body>
+</html>
