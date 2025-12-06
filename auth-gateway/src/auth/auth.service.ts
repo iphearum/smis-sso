@@ -16,7 +16,7 @@ export class AuthService {
   ) {}
 
   async login(username: string, password: string, appKey: string): Promise<SessionTokens> {
-    const app = this.applicationsService.requireApplication(appKey);
+    const app = await this.applicationsService.requireApplication(appKey);
     const user = await this.usersService.validateCredentials(username, password);
     return this.issueSession(user, app.key);
   }
@@ -27,7 +27,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const app = this.applicationsService.requireApplication(appKey);
+    const app = await this.applicationsService.requireApplication(appKey);
     const user = await this.usersService.getById(record.userId);
     return this.issueSession(user, app.key, refreshToken);
   }
@@ -39,7 +39,7 @@ export class AuthService {
     }
 
     const resolvedAppKey = appKey ?? record.appKey;
-    const app = this.applicationsService.requireApplication(resolvedAppKey);
+    const app = await this.applicationsService.requireApplication(resolvedAppKey);
     const user = await this.usersService.getById(record.userId);
     return this.issueSession(user, app.key, refreshToken);
   }
@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   private async issueSession(user: UserProfile, appKey: string, refreshToken?: string): Promise<SessionTokens> {
-    const app = this.applicationsService.requireApplication(appKey);
+    const app = await this.applicationsService.requireApplication(appKey);
     const { roles, permissions } = await this.usersService.resolveAuthorizations(user, app);
     const userId = String(user.id);
     const accessToken = await this.createAccessToken({

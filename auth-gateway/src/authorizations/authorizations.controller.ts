@@ -21,7 +21,7 @@ export class AuthorizationsController {
     }
 
     const requestedAppKey = appKey || payload.appKey;
-    const application = this.applicationsService.requireApplication(requestedAppKey);
+    const application = await this.applicationsService.requireApplication(requestedAppKey);
     if (payload.appKey !== application.key) {
       throw new BadRequestException('Token does not match requested application key');
     }

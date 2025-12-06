@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare } from 'bcryptjs';
 import { In, Repository } from 'typeorm';
-import { ApplicationDefinition } from '../applications/applications.service';
+import { Application } from '../applications/application.entity';
 import { AssigningRole } from '../database/entities/assigning-role.entity';
 import { Branch } from '../database/entities/branch.entity';
 import { Department } from '../database/entities/department.entity';
@@ -85,7 +85,7 @@ export class UsersService {
 
   async resolveAuthorizations(
     user: UserProfile,
-    app: ApplicationDefinition
+    app: Application
   ): Promise<{ roles: string[]; permissions: string[] }> {
     // If no employee mapped, fall back to defaults.
     if (!user.employeeId) {
