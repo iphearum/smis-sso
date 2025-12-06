@@ -131,6 +131,24 @@ export class UsersService {
     };
   }
 
+  async getPermissionsForRoles(roleNames: string[]): Promise<string[]> {
+    if (!roleNames.length) return [];
+
+    const roles = await this.rolesRepo.findBy({ name: In(roleNames) });
+    if (!roles.length) return [];
+
+    const roleIds = roles.map((r) => r.id);
+    const permsThroughRoles = await this.permRoleRepo
+      .createQueryBuilder('pr')
+      .leftJoinAndSelect('pr.permission', 'p')
+      .where('pr.role_id IN (:...roleIds)', { roleIds })
+      .getMany();
+
+    const permissions = new Set<string>();
+    permsThroughRoles.forEach((pr) => permissions.add(pr.permission.name));
+    return Array.from(permissions);
+  }
+
   private async findEmployeeByUserId(userId: number): Promise<Employee | undefined> {
     const employee = await this.employeesRepo.findOne({
       where: { user: { id: userId }, active: true }

@@ -14,7 +14,7 @@ export class AuthorizationsController {
 
   @Get('/authorizations')
   @UseGuards(JwtAuthGuard)
-  getAuthorizations(@Headers('x-smis-app-key') appKey: string, @Req() request: FastifyRequest): { roles: string[]; permissions: string[] } {
+  async getAuthorizations(@Headers('x-smis-app-key') appKey: string, @Req() request: FastifyRequest): Promise<{ roles: string[]; permissions: string[] }> {
     const payload = (request as FastifyRequest & { user?: AccessTokenPayload }).user;
     if (!payload) {
       throw new BadRequestException('Missing access token context');
@@ -26,7 +26,10 @@ export class AuthorizationsController {
       throw new BadRequestException('Token does not match requested application key');
     }
 
-    return { roles: payload.roles, permissions: payload.permissions };
+    const rolePermissions = await this.usersService.getPermissionsForRoles(payload.roles ?? []);
+    const flatPermissions = Array.from(new Set([...(payload.permissions ?? []), ...rolePermissions]));
+
+    return { roles: payload.roles, permissions: flatPermissions };
   }
 
   @Get('/authorizations/context')
