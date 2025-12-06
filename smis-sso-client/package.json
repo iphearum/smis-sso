@@ -5,11 +5,24 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc -p tsconfig.json"
+  "keywords": ["sso", "authentication", "smis", "client"],
+  "author": "Your Team Name",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourorg/sso-client.git"
   },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepublishOnly": "npm run build",
+    "dev": "bun run examples/basic.ts"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "dependencies": {},
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^5.4.0"
   }
 }
